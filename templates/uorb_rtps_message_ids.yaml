@@ -11,6 +11,7 @@ rtps:
     msg: Airspeed
   - id: 6
     msg: BatteryStatus
+    send: true
   - id: 7
     msg: CameraCapture
   - id: 8
@@ -76,6 +77,7 @@ rtps:
     msg: LedControl
   - id: 36
     msg: LogMessage
+    send: true
   - id: 37
     msg: ManualControlSetpoint
   - id: 38
@@ -194,6 +196,7 @@ rtps:
     receive: true
   - id: 90
     msg: VehicleCommandAck
+    send: true
   - id: 91
     msg: VehicleConstraints
   - id: 92
@@ -305,6 +308,7 @@ rtps:
     msg: ManualControlSwitches
   - id: 141
     msg: EstimatorStatusFlags
+    send: true
   - id: 142
     msg: RtlFlightTime
   - id: 143
@@ -321,6 +325,7 @@ rtps:
     msg: MagWorkerData
   - id: 149
     msg: TakeoffStatus
+    send: true
   - id: 150
     msg: HeaterStatus
   - id: 151
