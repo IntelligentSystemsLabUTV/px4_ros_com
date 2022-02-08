@@ -24,16 +24,12 @@ rtps:
     msg: Cpuload
   - id: 12
     msg: DebugArray
-    receive: true
   - id: 13
     msg: DebugKeyValue
-    receive: true
   - id: 14
     msg: DebugValue
-    receive: true
   - id: 15
     msg: DebugVect
-    receive: true
   - id: 16
     msg: DifferentialPressure
   - id: 17
@@ -64,7 +60,6 @@ rtps:
     msg: HomePosition
   - id: 30
     msg: InputRc
-    send: true
   - id: 31
     msg: IridiumsbdStatus
   - id: 32
@@ -97,7 +92,6 @@ rtps:
     receive: true
   - id: 45
     msg: OpticalFlow
-    receive: true
   - id: 46
     msg: ParameterUpdate
   - id: 47
@@ -108,10 +102,8 @@ rtps:
     msg: PositionControllerStatus
   - id: 50
     msg: PositionSetpoint
-    receive: true
   - id: 51
     msg: PositionSetpointTriplet
-    receive: true
   - id: 52
     msg: PowerButtonState
   - id: 53
@@ -132,7 +124,6 @@ rtps:
     msg: Safety
   - id: 61
     msg: SatelliteInfo
-    send: true
   - id: 62
     msg: SensorAccel
   - id: 63
@@ -162,7 +153,6 @@ rtps:
     msg: TecsStatus
   - id: 76
     msg: TelemetryStatus
-    receive: true
   - id: 77
     msg: TestMotor
   - id: 78
@@ -171,7 +161,6 @@ rtps:
     send: true
   - id: 79
     msg: TrajectoryWaypoint
-    send: true
   - id: 80
     msg: TransponderReport
   - id: 81
@@ -201,7 +190,6 @@ rtps:
     msg: VehicleConstraints
   - id: 92
     msg: VehicleControlMode
-    send: true
   - id: 93
     msg: VehicleGlobalPosition
   - id: 94
@@ -225,19 +213,16 @@ rtps:
     msg: VehicleRoi
   - id: 102
     msg: VehicleStatus
-    send: true
   - id: 103
     msg: VehicleStatusFlags
   - id: 104
     msg: VehicleTrajectoryWaypoint
-    receive: true
   - id: 105
     msg: VtolVehicleStatus
   - id: 106
     msg: Wind
   - id: 107
     msg: CollisionConstraints
-    send: true
   - id: 108
     msg: OrbitStatus
   - id: 109
@@ -248,14 +233,12 @@ rtps:
     msg: WheelEncoders
   - id: 112
     msg: VehicleAngularVelocity
-    send: true
   - id: 113
     msg: VehicleAcceleration
   - id: 115
     msg: AirspeedValidated
   - id: 116
     msg: OnboardComputerStatus
-    receive: true
   - id: 117
     msg: CellularStatus
   - id: 118
@@ -276,10 +259,8 @@ rtps:
     msg: HoverThrustEstimate
   - id: 126
     msg: TrajectoryBezier
-    receive: true
   - id: 127
     msg: VehicleTrajectoryBezier
-    receive: true
   - id: 128
     msg: TimesyncStatus
   - id: 129
@@ -382,7 +363,6 @@ rtps:
   - alias: VehicleOdometry
     id: 191
     msg: VehicleMocapOdometry
-    receive: true
   - alias: VehicleOdometry
     id: 192
     msg: VehicleVisualOdometry
@@ -390,7 +370,6 @@ rtps:
   - alias: VehicleTrajectoryWaypoint
     id: 193
     msg: VehicleTrajectoryWaypointDesired
-    send: true
   - alias: ObstacleDistance
     id: 194
     msg: ObstacleDistanceFused
