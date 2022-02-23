@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(px4_ros_com)
 
+set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(EnableC++XX)
