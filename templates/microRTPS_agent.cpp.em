@@ -87,7 +87,7 @@ using namespace eprosima::fastrtps;
 
 volatile sig_atomic_t running = 1;
 Transport_node *transport_node = nullptr;
-RtpsTopics topics;
+std::unique_ptr<RtpsTopics> topics = nullptr;
 uint32_t total_sent = 0, sent = 0;
 
 struct options {
@@ -207,7 +207,7 @@ void t_send(void *)
 		eprosima::fastcdr::Cdr scdr(cdrbuffer);
 
 		if (!exit_sender_thread) {
-			if (topics.getMsg(topic_ID, scdr)) {
+			if (topics->getMsg(topic_ID, scdr)) {
 				length = scdr.getSerializedDataLength();
 
 				if (0 < (length = transport_node->write(topic_ID, data_buffer, length))) {
@@ -283,12 +283,13 @@ int main(int argc, char **argv)
 	uint8_t topic_ID = 255;
 	std::chrono::time_point<std::chrono::steady_clock> start, end;
 @[end if]@
+  topics = std::make_unique<RtpsTopics>();
 
 	// Init timesync
-	topics.set_timesync(std::make_shared<TimeSync>(_options.verbose_debug));
+	topics->set_timesync(std::make_shared<TimeSync>(_options.verbose_debug));
 
 @[if recv_topics]@
-	topics.init(&t_send_queue_cv, &t_send_queue_mutex, &t_send_queue, _options.ns);
+	topics->init(&t_send_queue_cv, &t_send_queue_mutex, &t_send_queue, _options.ns);
 @[end if]@
 
 	running = true;
@@ -303,7 +304,7 @@ int main(int argc, char **argv)
 
 		// Publish messages received from UART
 		if (0 < (length = transport_node->read(&topic_ID, data_buffer, BUFFER_SIZE))) {
-			topics.publish(topic_ID, data_buffer, sizeof(data_buffer));
+			topics->publish(topic_ID, data_buffer, sizeof(data_buffer));
 			++received;
 			total_read += length;
 			receiving = true;
@@ -334,6 +335,7 @@ int main(int argc, char **argv)
 
 	delete transport_node;
 	transport_node = nullptr;
+  topics.reset();
 
 	return 0;
 }
