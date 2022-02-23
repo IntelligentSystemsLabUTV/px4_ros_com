@@ -61,6 +61,8 @@ except AttributeError:
  ****************************************************************************/
 
 #include <fastcdr/Cdr.h>
+#include <fastcdr/exceptions/BadParamException.h>
+#include <fastcdr/exceptions/NotEnoughMemoryException.h>
 #include <condition_variable>
 #include <queue>
 #include <type_traits>

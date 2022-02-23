@@ -107,7 +107,19 @@ void RtpsTopics::publish(const uint8_t topic_ID, char data_buffer[], size_t len)
 		@(topic)_msg_t st;
 		eprosima::fastcdr::FastBuffer cdrbuffer(data_buffer, len);
 		eprosima::fastcdr::Cdr cdr_des(cdrbuffer);
-		st.deserialize(cdr_des);
+    try {
+		  st.deserialize(cdr_des);
+    } catch (const eprosima::fastcdr::exception::BadParamException & e) {
+      printf(
+        "\033[1;33m[   micrortps_agent   ]\tTopic ID '%hhu'::BadParamException: %s, dropping message\033[0m\n",
+        topic_ID, e.what());
+      return;
+    } catch (const eprosima::fastcdr::exception::NotEnoughMemoryException & e) {
+      printf(
+        "\033[1;33m[   micrortps_agent   ]\tTopic ID '%hhu'::NotEnoughMemoryException: %s, dropping message\033[0m\n",
+        topic_ID, e.what());
+      return;
+    }
 @[    if topic == 'Timesync' or topic == 'timesync']@
 		_timesync->processTimesyncMsg(&st, &_@(topic)_pub);
 
