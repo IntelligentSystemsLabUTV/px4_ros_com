@@ -76,6 +76,8 @@ except AttributeError:
 using SharedMemTransportDescriptor = eprosima::fastdds::rtps::SharedMemTransportDescriptor;
 @[end if]@
 
+extern bool localhost_only;
+
 
 @(topic)_Subscriber::@(topic)_Subscriber()
 	: mp_participant(nullptr),
@@ -116,13 +118,14 @@ bool @(topic)_Subscriber::init(uint8_t topic_ID, std::condition_variable *t_send
 	PParam.rtps.setName(nodeName.c_str());
 
 @[if ros2_distro]@
-	// Check if ROS_LOCALHOST_ONLY is set. This means that one wants to use only
-	// the localhost network for data sharing. If FastRTPS/DDS >= 2.0 and
-	// RMW_IMPLEMENTATION is FastDDS then the Shared Memory transport is used
-	const char* localhost_only = std::getenv("ROS_LOCALHOST_ONLY");
+	// Check if ROS_LOCALHOST_ONLY or the corresponding input argument is set.
+  // This means that one wants to use only the localhost network for data sharing.
+  // If FastRTPS/DDS >= 2.0 and RMW_IMPLEMENTATION is FastDDS then the Shared Memory
+  // transport is used.
+	const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
 	const char* rmw_implementation = std::getenv("RMW_IMPLEMENTATION");
 	const char* ros_distro = std::getenv("ROS_DISTRO");
-	if (localhost_only && strcmp(localhost_only, "1") == 0
+	if (((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || localhost_only)
 	    && ((rmw_implementation && ((strcmp(rmw_implementation, "rmw_fastrtps_cpp") == 0)
 	    || (strcmp(rmw_implementation, "rmw_fastrtps_dynamic_cpp") == 0)))
 	    || (!rmw_implementation && ros_distro && strcmp(ros_distro, "foxy") == 0))) {

@@ -89,6 +89,7 @@ volatile sig_atomic_t running = 1;
 std::unique_ptr<Transport_node> transport_node = nullptr;
 std::unique_ptr<RtpsTopics> topics = nullptr;
 uint32_t total_sent = 0, sent = 0;
+bool localhost_only = false;
 
 struct options {
 	enum class eTransports {
@@ -117,6 +118,7 @@ static void usage(const char *name)
 	       "  -f <sw flow control>    Activates UART link SW flow control\n"
 	       "  -h <hw flow control>    Activates UART link HW flow control\n"
 	       "  -i <ip_address>         Target IP for UDP. Default 127.0.0.1\n"
+         "  -l                      Use only the local loopback interface for DDS communications\n"
 	       "  -n <namespace>          ROS 2 topics namespace. Identifies the vehicle in a multi-agent network\n"
 	       "  -p <poll_ms>            Time in ms to poll over UART. Default 1ms\n"
 	       "  -r <reception port>     UDP port for receiving. Default 2020\n"
@@ -131,7 +133,7 @@ static int parse_options(int argc, char **argv)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, "t:d:w:b:p:r:s:i:fhvn:")) != EOF) {
+	while ((ch = getopt(argc, argv, "t:d:w:b:p:r:s:i:fhvln:")) != EOF) {
 		switch (ch) {
 		case 't': _options.transport      = strcmp(optarg, "UDP") == 0 ?
 							    options::eTransports::UDP
@@ -156,6 +158,8 @@ static int parse_options(int argc, char **argv)
 		case 'h': _options.hw_flow_control = true;                          break;
 
 		case 'v': _options.verbose_debug = true;                            break;
+
+    case 'l': localhost_only = true;                                    break;
 
 		case 'n': if (nullptr != optarg) _options.ns = std::string(optarg) + "/"; break;
 
@@ -240,10 +244,10 @@ int main(int argc, char **argv)
 	printf("\033[0;37m--- MicroRTPS Agent ---\033[0m\n");
 	printf("[   micrortps_agent   ]\tStarting link...\n");
 
-	const char* localhost_only = std::getenv("ROS_LOCALHOST_ONLY");
+	const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
 
-	if (localhost_only && strcmp(localhost_only, "1") == 0) {
-		printf("[   micrortps_agent   ]\tUsing only the localhost network...\n");
+	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || localhost_only) {
+		printf("[   micrortps_agent   ]\tUsing only the local loopback network interface\n");
 	}
 
 	switch (_options.transport) {
