@@ -76,8 +76,6 @@ except AttributeError:
 using SharedMemTransportDescriptor = eprosima::fastdds::rtps::SharedMemTransportDescriptor;
 @[end if]@
 
-extern bool localhost_only;
-
 
 @(topic)_Subscriber::@(topic)_Subscriber()
 	: mp_participant(nullptr),
@@ -90,7 +88,7 @@ extern bool localhost_only;
 }
 
 bool @(topic)_Subscriber::init(uint8_t topic_ID, std::condition_variable *t_send_queue_cv,
-			       std::mutex *t_send_queue_mutex, std::queue<uint8_t> *t_send_queue, const std::string &ns)
+			       std::mutex *t_send_queue_mutex, std::queue<uint8_t> *t_send_queue, const std::string &ns, bool localhost_only)
 {
 	m_listener.topic_ID = topic_ID;
 	m_listener.t_send_queue_cv = t_send_queue_cv;

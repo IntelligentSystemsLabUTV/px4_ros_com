@@ -76,8 +76,6 @@ except AttributeError:
 using SharedMemTransportDescriptor = eprosima::fastdds::rtps::SharedMemTransportDescriptor;
 @[end if]@
 
-extern bool localhost_only;
-
 
 @(topic)_Publisher::@(topic)_Publisher()
 	: mp_participant(nullptr),
@@ -89,7 +87,7 @@ extern bool localhost_only;
 	Domain::removeParticipant(mp_participant);
 }
 
-bool @(topic)_Publisher::init(const std::string &ns)
+bool @(topic)_Publisher::init(const std::string &ns, bool localhost_only)
 {
 	// Create RTPSParticipant
 	ParticipantAttributes PParam;

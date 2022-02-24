@@ -91,7 +91,6 @@ volatile sig_atomic_t running = 1;
 std::unique_ptr<Transport_node> transport_node = nullptr;
 std::unique_ptr<RtpsTopics> topics = nullptr;
 unsigned long int total_sent = 0, sent = 0;
-bool localhost_only = false; // TODO add to RtpsTopics
 
 /* Startup options */
 struct options {
@@ -110,6 +109,7 @@ struct options {
 	bool sw_flow_control = false;
 	bool hw_flow_control = false;
 	bool verbose_debug = false;
+  bool localhost_only = false;
 	std::string ns = "";
 } _options;
 
@@ -164,7 +164,7 @@ static int parse_options(int argc, char **argv)
 
 		case 'v': _options.verbose_debug = true;                            break;
 
-    case 'l': localhost_only = true;                                    break;
+    case 'l': _options.localhost_only = true;                           break;
 
 		case 'n': if (nullptr != optarg) _options.ns = std::string(optarg) + "/"; break;
 
@@ -258,10 +258,10 @@ int main(int argc, char ** argv)
 
 	const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
 
-	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || localhost_only) {
+	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || _options.localhost_only) {
 		printf("[   micrortps_agent   ]\tUsing only the local loopback network interface\n");
 	}
-  if (localhost_only && (!localhost_only_var || strcmp(localhost_only_var, "1"))) {
+  if (_options.localhost_only && (!localhost_only_var || strcmp(localhost_only_var, "1"))) {
     // Set the environment variable in case it wasn't but the option was specified
     if (setenv("ROS_LOCALHOST_ONLY", "1", 1)) {
       printf("\033[1;31m[   micrortps_agent   ]\tFailed to configure environment\033[0m\n");
@@ -309,7 +309,7 @@ int main(int argc, char ** argv)
 	uint8_t topic_ID = 255;
 	std::chrono::time_point<std::chrono::steady_clock> start, end;
 @[end if]@
-  topics = std::make_unique<RtpsTopics>();
+  topics = std::make_unique<RtpsTopics>(_options.localhost_only);
 
 	// Initialize timesync module
 	topics->set_timesync(std::make_shared<TimeSync>(_options.verbose_debug));

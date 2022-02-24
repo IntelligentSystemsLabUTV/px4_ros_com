@@ -96,6 +96,9 @@ using @(topic)_msg_t = @(topic);
 class RtpsTopics
 {
 public:
+  RtpsTopics(bool localhost_only)
+  : localhost_only_(localhost_only)
+  {};
 	bool init(std::condition_variable *t_send_queue_cv, std::mutex *t_send_queue_mutex, std::queue<uint8_t> *t_send_queue,
 		  const std::string &ns);
 	void set_timesync(const std::shared_ptr<TimeSync> &timesync) { _timesync = timesync; };
@@ -107,6 +110,9 @@ public:
 @[end if]@
 
 private:
+  /* Forces usage of local loopback network interface */
+  bool localhost_only_;
+
 @[if send_topics]@
 	/** Publishers **/
 @[for topic in send_topics]@

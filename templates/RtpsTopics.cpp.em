@@ -64,7 +64,7 @@ bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_se
 	std::cout << "\033[0;36m---   Subscribers   ---\033[0m" << std::endl;
 @[for topic in recv_topics]@
 
-	if (_@(topic)_sub.init(@(rtps_message_id(ids, topic)), t_send_queue_cv, t_send_queue_mutex, t_send_queue, ns)) {
+	if (_@(topic)_sub.init(@(rtps_message_id(ids, topic)), t_send_queue_cv, t_send_queue_mutex, t_send_queue, ns, localhost_only_)) {
 		std::cout << "- @(topic) subscriber started" << std::endl;
 
 	} else {
@@ -80,7 +80,7 @@ bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_se
 	std::cout << "\033[0;36m----   Publishers  ----\033[0m" << std::endl;
 @[for topic in send_topics]@
 
-	if (_@(topic)_pub.init(ns)) {
+	if (_@(topic)_pub.init(ns, localhost_only_)) {
 		std::cout << "- @(topic) publisher started" << std::endl;
 @[    if topic == 'Timesync' or topic == 'timesync']@
 		_timesync->start(&_@(topic)_pub);
