@@ -54,6 +54,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 
 #include <thread>
 #include <atomic>
+#include <cstdlib>
 #include <unistd.h>
 #include <poll.h>
 #include <chrono>
@@ -211,8 +212,8 @@ void t_send(void *)
 		t_send_queue.pop();
 		lk.unlock();
 
+		// Make room for the header to fill in later
 		size_t header_length = transport_node->get_header_length();
-		/* make room for the header to fill in later */
 		eprosima::fastcdr::FastBuffer cdrbuffer(&data_buffer[header_length], sizeof(data_buffer) - header_length);
 		eprosima::fastcdr::Cdr scdr(cdrbuffer);
 
@@ -260,6 +261,13 @@ int main(int argc, char ** argv)
 	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || localhost_only) {
 		printf("[   micrortps_agent   ]\tUsing only the local loopback network interface\n");
 	}
+  if (localhost_only && (!localhost_only_var || strcmp(localhost_only_var, "1"))) {
+    // Set the environment variable in case it wasn't but the option was specified
+    if (setenv("ROS_LOCALHOST_ONLY", "1", 1)) {
+      printf("\033[1;31m[   micrortps_agent   ]\tFailed to configure environment\033[0m\n");
+		  exit(EXIT_FAILURE);
+    }
+  }
 
 	switch (_options.transport) {
 	case options::eTransports::UART: {
