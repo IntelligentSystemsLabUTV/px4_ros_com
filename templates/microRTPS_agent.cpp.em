@@ -72,7 +72,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 #include "microRTPS_timesync.h"
 #include "RtpsTopics.h"
 
-// Default values
+/* Options default values */
 #define DEVICE "/dev/ttyACM0"
 #define SLEEP_US 1
 #define BAUDRATE 460800
@@ -85,12 +85,14 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 using namespace eprosima;
 using namespace eprosima::fastrtps;
 
+/* Global application state */
 volatile sig_atomic_t running = 1;
 std::unique_ptr<Transport_node> transport_node = nullptr;
 std::unique_ptr<RtpsTopics> topics = nullptr;
-uint32_t total_sent = 0, sent = 0;
-bool localhost_only = false;
+unsigned long int total_sent = 0, sent = 0;
+bool localhost_only = false; // TODO add to RtpsTopics
 
+/* Startup options */
 struct options {
 	enum class eTransports {
 		UART,
@@ -110,25 +112,27 @@ struct options {
 	std::string ns = "";
 } _options;
 
+/* Prints usage information. */
 static void usage(const char *name)
 {
 	printf("usage: %s [options]\n\n"
-	       "  -b <baudrate>           UART device baudrate. Default 460800\n"
-	       "  -d <device>             UART device. Default /dev/ttyACM0\n"
+	       "  -b <baudrate>           UART device baudrate (default: 460800 baud)\n"
+	       "  -d <device>             UART device (default: /dev/ttyACM0)\n"
 	       "  -f <sw flow control>    Activates UART link SW flow control\n"
 	       "  -h <hw flow control>    Activates UART link HW flow control\n"
-	       "  -i <ip_address>         Target IP for UDP. Default 127.0.0.1\n"
+	       "  -i <ip_address>         Target IP for UDP (default: 127.0.0.1)\n"
          "  -l                      Use only the local loopback interface for DDS communications\n"
-	       "  -n <namespace>          ROS 2 topics namespace. Identifies the vehicle in a multi-agent network\n"
-	       "  -p <poll_ms>            Time in ms to poll over UART. Default 1ms\n"
-	       "  -r <reception port>     UDP port for receiving. Default 2020\n"
-	       "  -s <sending port>       UDP port for sending. Default 2019\n"
-	       "  -t <transport>          [UART|UDP] Default UART\n"
-	       "  -v <debug verbosity>    Add more verbosity\n"
-	       "  -w <sleep_time_us>      Time in us for which each iteration sleep. Default 1ms\n",
+	       "  -n <namespace>          ROS 2 topics namespace\n"
+	       "  -p <poll_ms>            Time in ms to poll over UART (default: 1 ms)\n"
+	       "  -r <reception port>     UDP inbound port (default: 2020)\n"
+	       "  -s <sending port>       UDP outbound port (default: 2019)\n"
+	       "  -t <transport>          UDP or UART transport (default: UART)\n"
+	       "  -v <debug verbosity>    Add more verbosity to logs\n"
+	       "  -w <sleep_time_us>      Time in us for which to sleep in each iteration (default: 1 ms)\n",
 	       name);
 }
 
+/* Parses startup options. */
 static int parse_options(int argc, char **argv)
 {
 	int ch;
@@ -164,18 +168,18 @@ static int parse_options(int argc, char **argv)
 		case 'n': if (nullptr != optarg) _options.ns = std::string(optarg) + "/"; break;
 
 		default:
-			usage(argv[0]);
+			usage("micrortps_agent");
 			return -1;
 		}
 	}
 
 	if (_options.poll_ms < 1) {
 		_options.poll_ms = 1;
-		printf("\033[1;33m[   micrortps_agent   ]\tPoll timeout too low, using 1 ms\033[0m");
+		printf("\033[1;33m[   micrortps_agent   ]\tPoll timeout too low, reset to 1 ms\033[0m");
 	}
 
 	if (_options.hw_flow_control && _options.sw_flow_control) {
-		printf("\033[0;31m[   micrortps_agent   ]\tHW and SW flow control set. Please set only one or another\033[0m");
+		printf("\033[1;31m[   micrortps_agent   ]\tBoth HW and SW flow control set\033[0m");
 		return -1;
 	}
 
@@ -183,15 +187,17 @@ static int parse_options(int argc, char **argv)
 }
 
 @[if recv_topics]@
+/* Sender thread state */
 std::atomic<bool> exit_sender_thread(false);
 std::condition_variable t_send_queue_cv;
 std::mutex t_send_queue_mutex;
 std::queue<uint8_t> t_send_queue;
 
+/* Sender thread routine. */
 void t_send(void *)
 {
 	char data_buffer[BUFFER_SIZE] = {};
-	uint32_t length = 0;
+	size_t length = 0;
 	uint8_t topic_ID = 255;
 
 	while (running && !exit_sender_thread) {
@@ -213,9 +219,10 @@ void t_send(void *)
 		if (!exit_sender_thread) {
 			if (topics->getMsg(topic_ID, scdr)) {
 				length = scdr.getSerializedDataLength();
+        ssize_t write_res;
 
-				if (0 < (length = transport_node->write(topic_ID, data_buffer, length))) {
-					total_sent += length;
+				if (0 < (write_res = transport_node->write(topic_ID, data_buffer, length))) {
+					total_sent += static_cast<unsigned long int>(write_res);
 					++sent;
 				}
 			}
@@ -224,25 +231,29 @@ void t_send(void *)
 }
 @[end if]@
 
+/* TODO Redo */
 void signal_handler(int signum)
 {
-	printf("\n\033[1;33m[   micrortps_agent   ]\tInterrupt signal (%d) received.\033[0m\n", signum);
+	printf("\n\033[1;33m[   micrortps_agent   ]\tGot signal (%d)\033[0m\n", signum);
 	running = 0;
 	transport_node->close();
 }
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
-	if (-1 == parse_options(argc, argv)) {
-		printf("\033[1;33m[   micrortps_agent   ]\tEXITING...\033[0m\n");
-		return -1;
+  // Parse startup options
+	if (parse_options(argc, argv)) {
+    printf("\033[1;31m[   micrortps_agent   ]\tFailed to parse options\033[0m\n");
+		exit(EXIT_FAILURE);
 	}
 
+  // TODO Use other module
 	// register signal SIGINT and signal handler
 	signal(SIGINT, signal_handler);
 
+  // Initialize transport handlers
 	printf("\033[0;37m--- MicroRTPS Agent ---\033[0m\n");
-	printf("[   micrortps_agent   ]\tStarting link...\n");
+	printf("\033[1;33m[   micrortps_agent   ]\tStarting link...\033[0m\n");
 
 	const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
 
@@ -254,7 +265,7 @@ int main(int argc, char **argv)
 	case options::eTransports::UART: {
 			transport_node = std::make_unique<UART_node>(_options.device, _options.baudrate, _options.poll_ms,
 						       _options.sw_flow_control, _options.hw_flow_control, _options.verbose_debug);
-			printf("[   micrortps_agent   ]\tUART transport: device: %s; baudrate: %d; sleep: %dus; poll: %dms; flow_control: %s\n",
+			printf("[   micrortps_agent   ]\tUART transport: device: %s; baudrate: %d; sleep time: %d us; poll interval: %d ms; flow_control: %s\n",
 			       _options.device, _options.baudrate, _options.sleep_us, _options.poll_ms,
 			       _options.sw_flow_control ? "SW enabled" : (_options.hw_flow_control ? "HW enabled" : "No"));
 		}
@@ -262,45 +273,52 @@ int main(int argc, char **argv)
 
 	case options::eTransports::UDP: {
 			transport_node = std::make_unique<UDP_node>(_options.ip, _options.recv_port, _options.send_port, _options.verbose_debug);
-			printf("[   micrortps_agent   ]\tUDP transport: ip address: %s; recv port: %u; send port: %u; sleep: %dus\n",
+			printf("[   micrortps_agent   ]\tUDP transport: IP address: %s; inbound port: %u; outbound port: %u; sleep time: %d us\n",
 			       _options.ip, _options.recv_port, _options.send_port, _options.sleep_us);
 		}
 		break;
 
 	default:
-		printf("\033[0;37m[   micrortps_agent   ]\tEXITING...\033[0m\n");
-		return -1;
+		printf("\033[1;31m[   micrortps_agent   ]\tInvalid transport\033[0m\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if (0 > transport_node->init()) {
-		printf("\033[0;37m[   micrortps_agent   ]\tEXITING...\033[0m\n");
-		return -1;
+		printf("\033[1;31m[   micrortps_agent   ]\tFailed to initialize transport node\033[0m\n");
+		exit(EXIT_FAILURE);
 	}
 
+  // Let threads initialize
 	sleep(1);
 
 @[if send_topics]@
+  // Initialize data counters
 	char data_buffer[BUFFER_SIZE] = {};
-	int received = 0, loop = 0;
-	int length = 0, total_read = 0;
+	unsigned long int received = 0, loop = 0;
+	int length = 0;
+  unsigned long int total_read = 0;
 	bool receiving = false;
 	uint8_t topic_ID = 255;
 	std::chrono::time_point<std::chrono::steady_clock> start, end;
 @[end if]@
   topics = std::make_unique<RtpsTopics>();
 
-	// Init timesync
+	// Initialize timesync module
 	topics->set_timesync(std::make_shared<TimeSync>(_options.verbose_debug));
 
 @[if recv_topics]@
+  // Initialize RTPS topics handler
 	topics->init(&t_send_queue_cv, &t_send_queue_mutex, &t_send_queue, _options.ns);
 @[end if]@
 
 	running = true;
+
 @[if recv_topics]@
+  // Start sender thread
 	std::thread sender_thread(t_send, nullptr);
 @[end if]@
 
+  // Message processing routine
 	while (running) {
 @[if send_topics]@
 		++loop;
@@ -310,7 +328,7 @@ int main(int argc, char **argv)
 		if (0 < (length = transport_node->read(&topic_ID, data_buffer, BUFFER_SIZE))) {
 			topics->publish(topic_ID, data_buffer, sizeof(data_buffer));
 			++received;
-			total_read += length;
+			total_read += static_cast<unsigned long int>(length);
 			receiving = true;
 			end = std::chrono::steady_clock::now();
 		}
@@ -320,25 +338,29 @@ int main(int argc, char **argv)
 	}
 
 @[if recv_topics]@
+  // Kill and join sender thread
 	exit_sender_thread = true;
 	t_send_queue_cv.notify_one();
 	sender_thread.join();
+@[end if]@
 
-	std::chrono::duration<double> elapsed_secs = end - start;
+@[if send_topics]@
 	if (received > 0) {
-		printf("[   micrortps_agent   ]\tRECEIVED: %d messages - %d bytes; %d LOOPS - %.03f seconds - %.02fKB/s\n",
+	  std::chrono::duration<double> elapsed_secs = end - start;
+		printf("\033[1;33m[   micrortps_agent   ]\tRECEIVED: %lu messages - %lu bytes; %lu loops - %.03f seconds - %.02f KB/s\033[0m\n",
 		       received, total_read, loop, elapsed_secs.count(), static_cast<double>(total_read) / (1000 * elapsed_secs.count()));
 	}
 @[end if]@
 @[if recv_topics]@
 	if (sent > 0) {
-		printf("[   micrortps_agent   ]\tSENT:     %lu messages - %lu bytes\n", static_cast<unsigned long>(sent),
-		       static_cast<unsigned long>(total_sent));
+		printf("\033[1;33m[   micrortps_agent   ]\tSENT: %lu messages - %lu bytes\033[0m\n",
+           sent, total_sent);
 	}
 @[end if]@
 
+  // Destroy transport handlers
 	transport_node.reset();
   topics.reset();
 
-	return 0;
+	exit(EXIT_SUCCESS);
 }
