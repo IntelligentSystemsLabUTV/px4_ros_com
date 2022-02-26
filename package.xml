@@ -16,9 +16,9 @@
   <build_depend>eigen</build_depend>
   <build_depend>ros_environment</build_depend>
 
-  <!--Should not be necessary like this
-  <build_depend>fastrtps</build_depend>
-  <build_depend>fastcdr</build_depend>-->
+  <!-- These should be installed but system-wide, not as colcon packages -->
+  <!--<build_depend>fastrtps</build_depend>-->
+  <!--<build_depend>fastcdr</build_depend>-->
 
   <depend>builtin_interfaces</depend>
   <depend>rclcpp</depend>
