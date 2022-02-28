@@ -195,7 +195,7 @@ std::mutex t_send_queue_mutex;
 std::queue<uint8_t> t_send_queue;
 
 /* Sender thread routine. */
-void t_send(void *)
+void sender()
 {
 	char data_buffer[BUFFER_SIZE] = {};
 	size_t length = 0;
@@ -321,7 +321,7 @@ int main(int argc, char ** argv)
 
 @[if recv_topics]@
   // Start sender thread
-	std::thread sender_thread(t_send, nullptr);
+	std::thread sender_thread(sender);
 @[end if]@
 
   // Message processing routine
@@ -345,7 +345,7 @@ int main(int argc, char ** argv)
 
 @[if recv_topics]@
   // Kill and join sender thread
-	exit_sender_thread = true;
+	exit_sender_thread.store(true, std::memory_order_release);
 	t_send_queue_cv.notify_one();
 	sender_thread.join();
 @[end if]@
