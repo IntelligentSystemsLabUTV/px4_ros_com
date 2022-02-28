@@ -80,22 +80,22 @@ uint16_t const crc16_table[256] = {
 	0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040
 };
 
-Transport_node::Transport_node(const bool _debug):
+TransportNode::TransportNode(const bool _debug):
 	rx_buff_pos(0),
 	debug(_debug)
 {
 }
 
-Transport_node::~Transport_node()
+TransportNode::~TransportNode()
 {
 }
 
-uint16_t Transport_node::crc16_byte(uint16_t crc, const uint8_t data)
+uint16_t TransportNode::crc16_byte(uint16_t crc, const uint8_t data)
 {
 	return (crc >> 8) ^ crc16_table[(crc ^ data) & 0xff];
 }
 
-uint16_t Transport_node::crc16(uint8_t const *buffer, size_t len)
+uint16_t TransportNode::crc16(uint8_t const *buffer, size_t len)
 {
 	uint16_t crc = 0;
 
@@ -106,7 +106,7 @@ uint16_t Transport_node::crc16(uint8_t const *buffer, size_t len)
 	return crc;
 }
 
-ssize_t Transport_node::read(uint8_t *topic_ID, char out_buffer[], size_t buffer_len)
+ssize_t TransportNode::read(uint8_t *topic_ID, char out_buffer[], size_t buffer_len)
 {
 	if (nullptr == out_buffer || nullptr == topic_ID || !fds_OK()) {
 		return -1;
@@ -238,12 +238,12 @@ ssize_t Transport_node::read(uint8_t *topic_ID, char out_buffer[], size_t buffer
 	return len;
 }
 
-size_t Transport_node::get_header_length()
+size_t TransportNode::get_header_length()
 {
 	return sizeof(struct Header);
 }
 
-ssize_t Transport_node::write(const uint8_t topic_ID, char buffer[], size_t length)
+ssize_t TransportNode::write(const uint8_t topic_ID, char buffer[], size_t length)
 {
 	if (!fds_OK()) {
 		return -1;
@@ -273,10 +273,10 @@ ssize_t Transport_node::write(const uint8_t topic_ID, char buffer[], size_t leng
 	return len + sizeof(header);
 }
 
-UART_node::UART_node(const char *_uart_name, const uint32_t _baudrate,
+UARTNode::UARTNode(const char *_uart_name, const uint32_t _baudrate,
 		     const uint32_t _poll_ms, const bool _hw_flow_control,
 		     const bool _sw_flow_control, const bool _debug):
-	Transport_node(_debug),
+	TransportNode(_debug),
 	uart_fd(-1),
 	baudrate(_baudrate),
 	poll_ms(_poll_ms),
@@ -289,12 +289,12 @@ UART_node::UART_node(const char *_uart_name, const uint32_t _baudrate,
 	}
 }
 
-UART_node::~UART_node()
+UARTNode::~UARTNode()
 {
 	close();
 }
 
-int UART_node::init()
+int UARTNode::init()
 {
 	// Open a serial port
 	uart_fd = open(uart_name, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -435,12 +435,12 @@ int UART_node::init()
 	return uart_fd;
 }
 
-bool UART_node::fds_OK()
+bool UARTNode::fds_OK()
 {
 	return (-1 != uart_fd);
 }
 
-uint8_t UART_node::close()
+uint8_t UARTNode::close()
 {
 	if (-1 != uart_fd) {
 #ifndef PX4_WARN
@@ -456,7 +456,7 @@ uint8_t UART_node::close()
 	return 0;
 }
 
-ssize_t UART_node::node_read(void *buffer, size_t len)
+ssize_t UARTNode::node_read(void *buffer, size_t len)
 {
 	if (nullptr == buffer || !fds_OK()) {
 		return -1;
@@ -472,7 +472,7 @@ ssize_t UART_node::node_read(void *buffer, size_t len)
 	return ret;
 }
 
-ssize_t UART_node::node_write(void *buffer, size_t len)
+ssize_t UARTNode::node_write(void *buffer, size_t len)
 {
 	if (nullptr == buffer || !fds_OK()) {
 		return -1;
@@ -481,7 +481,7 @@ ssize_t UART_node::node_write(void *buffer, size_t len)
 	return ::write(uart_fd, buffer, len);
 }
 
-bool UART_node::baudrate_to_speed(uint32_t bauds, speed_t *speed)
+bool UARTNode::baudrate_to_speed(uint32_t bauds, speed_t *speed)
 {
 #ifndef B460800
 #define B460800 460800
@@ -580,9 +580,9 @@ bool UART_node::baudrate_to_speed(uint32_t bauds, speed_t *speed)
 	return true;
 }
 
-UDP_node::UDP_node(const char *_udp_ip, uint16_t _udp_port_recv,
+UDPNode::UDPNode(const char *_udp_ip, uint16_t _udp_port_recv,
 		   uint16_t _udp_port_send, const bool _debug):
-	Transport_node(_debug),
+	TransportNode(_debug),
 	sender_fd(-1),
 	receiver_fd(-1),
 	udp_port_recv(_udp_port_recv),
@@ -593,12 +593,12 @@ UDP_node::UDP_node(const char *_udp_ip, uint16_t _udp_port_recv,
 	}
 }
 
-UDP_node::~UDP_node()
+UDPNode::~UDPNode()
 {
 	close();
 }
 
-int UDP_node::init()
+int UDPNode::init()
 {
 	if (0 > init_receiver(udp_port_recv) || 0 > init_sender(udp_port_send)) {
 		return -1;
@@ -607,12 +607,12 @@ int UDP_node::init()
 	return 0;
 }
 
-bool UDP_node::fds_OK()
+bool UDPNode::fds_OK()
 {
 	return (-1 != sender_fd && -1 != receiver_fd);
 }
 
-int UDP_node::init_receiver(uint16_t udp_port)
+int UDPNode::init_receiver(uint16_t udp_port)
 {
 #if !defined (__PX4_NUTTX) || (defined (CONFIG_NET) && defined (__PX4_NUTTX))
 	// udp socket data
@@ -654,7 +654,7 @@ int UDP_node::init_receiver(uint16_t udp_port)
 	return 0;
 }
 
-int UDP_node::init_sender(uint16_t udp_port)
+int UDPNode::init_sender(uint16_t udp_port)
 {
 #if !defined (__PX4_NUTTX) || (defined (CONFIG_NET) && defined (__PX4_NUTTX))
 
@@ -685,7 +685,7 @@ int UDP_node::init_sender(uint16_t udp_port)
 	return 0;
 }
 
-uint8_t UDP_node::close()
+uint8_t UDPNode::close()
 {
 #if !defined (__PX4_NUTTX) || (defined (CONFIG_NET) && defined (__PX4_NUTTX))
 
@@ -715,7 +715,7 @@ uint8_t UDP_node::close()
 	return 0;
 }
 
-ssize_t UDP_node::node_read(void *buffer, size_t len)
+ssize_t UDPNode::node_read(void *buffer, size_t len)
 {
 	if (nullptr == buffer || !fds_OK()) {
 		return -1;
@@ -730,7 +730,7 @@ ssize_t UDP_node::node_read(void *buffer, size_t len)
 	return ret;
 }
 
-ssize_t UDP_node::node_write(void *buffer, size_t len)
+ssize_t UDPNode::node_write(void *buffer, size_t len)
 {
 	if (nullptr == buffer || !fds_OK()) {
 		return -1;

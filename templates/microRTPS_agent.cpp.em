@@ -88,7 +88,7 @@ using namespace eprosima::fastrtps;
 
 /* Global application state */
 volatile sig_atomic_t running = 1;
-std::unique_ptr<Transport_node> transport_node = nullptr;
+std::unique_ptr<TransportNode> transport_node = nullptr;
 std::unique_ptr<RtpsTopics> topics = nullptr;
 unsigned long int total_sent = 0, sent = 0;
 
@@ -271,7 +271,7 @@ int main(int argc, char ** argv)
 
 	switch (_options.transport) {
 	case options::eTransports::UART: {
-			transport_node = std::make_unique<UART_node>(_options.device, _options.baudrate, _options.poll_ms,
+			transport_node = std::make_unique<UARTNode>(_options.device, _options.baudrate, _options.poll_ms,
 						       _options.sw_flow_control, _options.hw_flow_control, _options.verbose_debug);
 			printf("[   micrortps_agent   ]\tUART transport: device: %s; baudrate: %d; sleep time: %d us; poll interval: %d ms; flow_control: %s\n",
 			       _options.device, _options.baudrate, _options.sleep_us, _options.poll_ms,
@@ -280,7 +280,7 @@ int main(int argc, char ** argv)
 		break;
 
 	case options::eTransports::UDP: {
-			transport_node = std::make_unique<UDP_node>(_options.ip, _options.recv_port, _options.send_port, _options.verbose_debug);
+			transport_node = std::make_unique<UDPNode>(_options.ip, _options.recv_port, _options.send_port, _options.verbose_debug);
 			printf("[   micrortps_agent   ]\tUDP transport: IP address: %s; inbound port: %u; outbound port: %u; sleep time: %d us\n",
 			       _options.ip, _options.recv_port, _options.send_port, _options.sleep_us);
 		}
@@ -318,8 +318,6 @@ int main(int argc, char ** argv)
   // Initialize RTPS topics handler
 	topics->init(&t_send_queue_cv, &t_send_queue_mutex, &t_send_queue, _options.ns);
 @[end if]@
-
-	running = true;
 
 @[if recv_topics]@
   // Start sender thread
