@@ -67,6 +67,13 @@ class Classifier():
     def set_all_msgs(self):
         msg_list = []
         for filename in os.listdir(self.msg_folder):
+            # Add messages to exclude down here
+            if 'VehicleLocalPositionStamped' in filename:
+                continue
+            if 'VehicleAttitudeStamped' in filename:
+                continue
+            if 'PX4Timestamp' in filename:
+                continue
             if '.msg' in filename:
                 # add base messages
                 msg_list.append(re.sub(".msg", "", filename))

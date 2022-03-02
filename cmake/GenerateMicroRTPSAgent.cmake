@@ -30,6 +30,8 @@
 ##################################################################################
 # Cmake module to generate micro-RTPS agent code Depends on:
 #       - px4_msgs
+#       - std_msgs
+#       - rclcpp
 #       - templates/uorb_rtps_message_ids.yaml
 #       - scripts/uorb_rtps_classifier.py
 #       - scripts/generate_microRTPS_bridge.py
@@ -162,6 +164,8 @@ list(APPEND MICRORTPS_AGENT_FILES ${MICRORTPS_AGENT_DIR}/microRTPS_timesync.h)
 list(APPEND MICRORTPS_AGENT_FILES ${MICRORTPS_AGENT_DIR}/microRTPS_timesync.cpp)
 list(APPEND MICRORTPS_AGENT_FILES ${MICRORTPS_AGENT_DIR}/RtpsTopics.h)
 list(APPEND MICRORTPS_AGENT_FILES ${MICRORTPS_AGENT_DIR}/RtpsTopics.cpp)
+list(APPEND MICRORTPS_AGENT_FILES ${MICRORTPS_AGENT_DIR}/microRTPS_agent_node.hpp)
+list(APPEND MICRORTPS_AGENT_FILES ${MICRORTPS_AGENT_DIR}/microRTPS_agent_node.cpp)
 
 set(ALL_TOPIC_NAMES ${CONFIG_RTPS_SEND_TOPICS} ${CONFIG_RTPS_RECEIVE_TOPICS})
 list(REMOVE_DUPLICATES ALL_TOPIC_NAMES)

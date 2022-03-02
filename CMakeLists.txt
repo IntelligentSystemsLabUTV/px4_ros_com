@@ -48,6 +48,7 @@ find_package("${rmw_implementation}" REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 find_package(PythonInterp 3 REQUIRED)
 if(ROS_DISTRO IN_LIST ROS_DISTROS)
@@ -92,6 +93,15 @@ target_link_libraries(frame_transforms Eigen3::Eigen ${geometry_msgs_LIBRARIES} 
 # Add microRTPS agent
 add_executable(micrortps_agent ${MICRORTPS_AGENT_FILES})
 target_link_libraries(micrortps_agent fastrtps fastcdr)
+target_include_directories(micrortps_agent PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
+  micrortps_agent
+  "rclcpp"
+  "px4_msgs"
+  "std_msgs"
+)
 
 # Add examples
 custom_executable(examples/listeners sensor_combined_listener)

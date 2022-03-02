@@ -69,9 +69,12 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 #include <fastcdr/exceptions/Exception.h>
 #include <fastrtps/Domain.h>
 
+#include <rclcpp/rclcpp.hpp>
+
 #include "microRTPS_transport.h"
 #include "microRTPS_timesync.h"
 #include "RtpsTopics.h"
+#include "microRTPS_agent_node.hpp"
 
 /* Options default values */
 #define DEVICE "/dev/ttyACM0"
@@ -85,6 +88,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 
 using namespace eprosima;
 using namespace eprosima::fastrtps;
+using namespace MicroRTPSAgentNode;
 
 /* Global application state */
 volatile sig_atomic_t running = 1;
@@ -248,6 +252,11 @@ int main(int argc, char ** argv)
 		exit(EXIT_FAILURE);
 	}
 
+  // Initialize ROS 2 node
+  // TODO Add custom context
+  rclcpp::init(argc, argv);
+  auto agent_node = std::make_shared<AgentNode>("micrortps_agent_node", _options.ns);
+
   // TODO Use other module
 	// register signal SIGINT and signal handler
 	signal(SIGINT, signal_handler);
@@ -314,10 +323,8 @@ int main(int argc, char ** argv)
 	// Initialize timesync module
 	topics->set_timesync(std::make_shared<TimeSync>(_options.verbose_debug));
 
-@[if recv_topics]@
-  // Initialize RTPS topics handler
-	topics->init(&t_send_queue_cv, &t_send_queue_mutex, &t_send_queue, _options.ns);
-@[end if]@
+  // Initialize RTPS topics handlers
+	topics->init(&t_send_queue_cv, &t_send_queue_mutex, &t_send_queue, _options.ns, agent_node);
 
 @[if recv_topics]@
   // Start sender thread
@@ -367,6 +374,10 @@ int main(int argc, char ** argv)
   // Destroy transport handlers
 	transport_node.reset();
   topics.reset();
+
+  // Destroy ROS 2 context and node
+  agent_node.reset();
+  rclcpp::shutdown();
 
 	exit(EXIT_SUCCESS);
 }

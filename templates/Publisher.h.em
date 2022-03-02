@@ -75,8 +75,11 @@ except AttributeError:
 #include "@(topic)PubSubTypes.h"
 @[end if]@
 
+#include "microRTPS_agent_node.hpp"
+
 using namespace eprosima::fastrtps;
 using namespace eprosima::fastrtps::rtps;
+using namespace MicroRTPSAgentNode;
 
 @[if version.parse(fastrtps_version) <= version.parse('1.7.2')]@
 @[    if ros2_distro]@
@@ -101,12 +104,13 @@ class @(topic)_Publisher
 public:
 	@(topic)_Publisher();
 	virtual ~@(topic)_Publisher();
-	bool init(const std::string &ns, bool localhost_only);
+	bool init(const std::string &ns, bool localhost_only, std::shared_ptr<AgentNode> agent_node);
 	void run();
 	void publish(@(topic)_msg_t *st);
 private:
 	Participant *mp_participant;
 	Publisher *mp_publisher;
+  std::shared_ptr<AgentNode> agent_node_;
 
 	class PubListener : public PublisherListener
 	{

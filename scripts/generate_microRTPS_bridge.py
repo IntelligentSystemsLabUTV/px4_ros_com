@@ -432,6 +432,13 @@ def generate_agent(out_dir):
         gen_ros2_typename = "-typeros2 "
 
     for idl_file in glob.glob(os.path.join(idl_dir, "*.idl")):
+        # Add messages to exclude down here
+        if 'VehicleLocalPositionStamped' in idl_file:
+            continue
+        if 'VehicleAttitudeStamped' in idl_file:
+            continue
+        if 'PX4Timestamp' in idl_file:
+            continue
         try:
             ret = subprocess.check_call(fastrtpsgen_path + " -d " + out_dir +
                                         "/fastrtpsgen -example x64Linux2.6gcc " + gen_ros2_typename + fastrtpsgen_include + idl_file, shell=True)
@@ -449,6 +456,8 @@ def generate_agent(out_dir):
         shutil.rmtree(os.path.join(out_dir, "fastrtpsgen"))
     cp_wildcard(os.path.join(urtps_templates_dir,
                              "microRTPS_transport.*"), agent_out_dir)
+    cp_wildcard(os.path.join(urtps_templates_dir,
+                             "microRTPS_agent_node.*"), agent_out_dir)
     if cmakelists:
         os.rename(os.path.join(os.path.dirname(out_dir), "microRTPS_agent_CMakeLists.txt"),
                   os.path.join(os.path.dirname(out_dir), "CMakeLists.txt"))

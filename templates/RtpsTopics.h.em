@@ -69,6 +69,8 @@ except AttributeError:
 
 #include "microRTPS_timesync.h"
 
+#include "microRTPS_agent_node.hpp"
+
 @[for topic in send_topics]@
 #include "@(topic)_Publisher.h"
 @[end for]@
@@ -93,6 +95,8 @@ using @(topic)_msg_t = @(topic);
 @[    end if]@
 @[end for]@
 
+using namespace MicroRTPSAgentNode;
+
 class RtpsTopics
 {
 public:
@@ -100,7 +104,7 @@ public:
   : localhost_only_(localhost_only)
   {};
 	bool init(std::condition_variable *t_send_queue_cv, std::mutex *t_send_queue_mutex, std::queue<uint8_t> *t_send_queue,
-		  const std::string &ns);
+		  const std::string &ns, std::shared_ptr<AgentNode> agent_node);
 	void set_timesync(const std::shared_ptr<TimeSync> &timesync) { _timesync = timesync; };
 @[if send_topics]@
 	void publish(const uint8_t topic_ID, char data_buffer[], size_t len);

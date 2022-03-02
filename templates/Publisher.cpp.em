@@ -79,7 +79,8 @@ using SharedMemTransportDescriptor = eprosima::fastdds::rtps::SharedMemTransport
 
 @(topic)_Publisher::@(topic)_Publisher()
 	: mp_participant(nullptr),
-	  mp_publisher(nullptr)
+	  mp_publisher(nullptr),
+    agent_node_(nullptr)
 { }
 
 @(topic)_Publisher::~@(topic)_Publisher()
@@ -87,8 +88,11 @@ using SharedMemTransportDescriptor = eprosima::fastdds::rtps::SharedMemTransport
 	Domain::removeParticipant(mp_participant);
 }
 
-bool @(topic)_Publisher::init(const std::string &ns, bool localhost_only)
+bool @(topic)_Publisher::init(const std::string &ns, bool localhost_only, std::shared_ptr<AgentNode> agent_node)
 {
+  // Set Agent node pointer
+  agent_node_ = agent_node;
+
 	// Create RTPSParticipant
 	ParticipantAttributes PParam;
 @[if version.parse(fastrtps_version) < version.parse('2.0')]@
@@ -213,4 +217,37 @@ void @(topic)_Publisher::PubListener::onPublicationMatched(Publisher *pub, Match
 void @(topic)_Publisher::publish(@(topic)_msg_t *st)
 {
 	mp_publisher->write(st);
+@[if topic == 'VehicleLocalPosition' or topic == 'vehicle_local_position']@
+
+  // Publish sample with ROS 2 timestamp
+  agent_node_->publish_local_position_sample(
+    st->timestamp(),
+    st->timestamp_sample(),
+    st->xy_valid(),
+    st->z_valid(),
+    st->v_xy_valid(),
+    st->v_z_valid(),
+    st->x(),
+    st->y(),
+    st->z(),
+    st->vx(),
+    st->vy(),
+    st->vz(),
+    st->ax(),
+    st->ay(),
+    st->az());
+
+  // Publish valid timestamp for the rest of the architecture
+  agent_node_->publish_timestamp(st->timestamp());
+@[elif topic == 'VehicleAttitude' or topic == 'vehicle_attitude']@
+
+  // Publish sample with ROS 2 timestamp
+  agent_node_->publish_attitude_sample(
+    st->timestamp(),
+    st->timestamp_sample(),
+    st->q()[0],
+    st->q()[1],
+    st->q()[2],
+    st->q()[3]);
+@[end if]@
 }

@@ -57,7 +57,7 @@ package = package[0]
 #include "RtpsTopics.h"
 
 bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_send_queue_mutex,
-		      std::queue<uint8_t> *t_send_queue, const std::string &ns)
+		      std::queue<uint8_t> *t_send_queue, const std::string &ns, std::shared_ptr<AgentNode> agent_node)
 {
 @[if recv_topics]@
 	// Initialise subscribers
@@ -80,7 +80,7 @@ bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_se
 	std::cout << "\033[0;36m----   Publishers  ----\033[0m" << std::endl;
 @[for topic in send_topics]@
 
-	if (_@(topic)_pub.init(ns, localhost_only_)) {
+	if (_@(topic)_pub.init(ns, localhost_only_, agent_node)) {
 		std::cout << "- @(topic) publisher started" << std::endl;
 @[    if topic == 'Timesync' or topic == 'timesync']@
 		_timesync->start(&_@(topic)_pub);
