@@ -40,6 +40,8 @@
 #if __has_include("px4_platform_common/log.h") && __has_include("px4_platform_common/time.h")
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/time.h>
+#else
+#include <rclcpp/rclcpp.hpp>
 #endif
 
 #include "microRTPS_transport.h"
@@ -122,7 +124,7 @@ ssize_t TransportNode::read(uint8_t *topic_ID, char out_buffer[], size_t buffer_
 		if (errsv && EAGAIN != errsv && ETIMEDOUT != errsv) {
 #ifndef PX4_DEBUG
 
-			if (debug) { printf("\033[0;31m[ micrortps_transport ]\tRead fail %d\033[0m\n", errsv); }
+			if (debug) { printf("[ micrortps_transport ]\tRead fail %d\n", errsv); }
 
 #else
 
@@ -156,7 +158,7 @@ ssize_t TransportNode::read(uint8_t *topic_ID, char out_buffer[], size_t buffer_
 	if (msg_start_pos > (rx_buff_pos - header_size)) {
 #ifndef PX4_DEBUG
 
-		if (debug) { printf("\033[1;33m[ micrortps_transport ]\t                                (↓↓ %" PRIu32 ")\033[0m\n", msg_start_pos); }
+		if (debug) { printf("[ micrortps_transport ]\t                                (↓↓ %" PRIu32 ")\n", msg_start_pos); }
 
 #else
 
@@ -188,7 +190,7 @@ ssize_t TransportNode::read(uint8_t *topic_ID, char out_buffer[], size_t buffer_
 		if (msg_start_pos > 0) {
 #ifndef PX4_DEBUG
 
-			if (debug) { printf("\033[1;33m[ micrortps_transport ]\t                                (↓ %" PRIu32 ")\033[0m\n", msg_start_pos); }
+			if (debug) { printf("[ micrortps_transport ]\t                                (↓ %" PRIu32 ")\n", msg_start_pos); }
 
 #else
 
@@ -208,7 +210,7 @@ ssize_t TransportNode::read(uint8_t *topic_ID, char out_buffer[], size_t buffer_
 	if (read_crc != calc_crc) {
 #ifndef PX4_DEBUG
 
-		if (debug) { printf("\033[0;31m[ micrortps_transport ]\tBad CRC %" PRIu16 " != %" PRIu16 "\t\t(↓ %lu)\033[0m\n", read_crc, calc_crc, (unsigned long)(header_size + payload_len)); }
+		if (debug) { printf("[ micrortps_transport ]\tBad CRC %" PRIu16 " != %" PRIu16 "\t\t(↓ %lu)\\n", read_crc, calc_crc, (unsigned long)(header_size + payload_len)); }
 
 #else
 
@@ -301,7 +303,11 @@ int UARTNode::init()
 
 	if (uart_fd < 0) {
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUART transport: Failed to open device: %s (%d)\033[0m\n", uart_name, errno);
+    RCLCPP_ERROR(
+      rclcpp::get_logger("micrortps_transport"),
+      "UART transport: Failed to open device: %s (%d)",
+      uart_name,
+      errno);
 #else
 		PX4_ERR("UART transport: Failed to open device: %s (%d)", uart_name, errno);
 #endif /* PX4_ERR */
@@ -321,7 +327,7 @@ int UARTNode::init()
 	if ((termios_state = tcgetattr(uart_fd, &uart_config)) < 0) {
 		int errno_bkp = errno;
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUART transport: ERR GET CONF %s: %d (%d)\n\033[0m", uart_name, termios_state,
+		printf("[ micrortps_transport ]\tUART transport: ERR GET CONF %s: %d (%d)\n", uart_name, termios_state,
 		       errno);
 #else
 		PX4_ERR("UART transport: ERR GET CONF %s: %d (%d)", uart_name, termios_state, errno);
@@ -357,7 +363,7 @@ int UARTNode::init()
 
 	if (!baudrate_to_speed(baudrate, &speed)) {
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUART transport: ERR SET BAUD %s: Unsupported baudrate: %d\n\tsupported examples:\n\t9600, 19200, 38400, 57600, 115200, 230400, 460800, 500000, 921600, 1000000\033[0m\n",
+		printf("[ micrortps_transport ]\tUART transport: ERR SET BAUD %s: Unsupported baudrate: %d\n\tsupported examples:\n\t9600, 19200, 38400, 57600, 115200, 230400, 460800, 500000, 921600, 1000000\n",
 		       uart_name, baudrate);
 #else
 		PX4_ERR("UART transport: ERR SET BAUD %s: Unsupported baudrate: %" PRIu32 "\n\tsupported examples:\n\t9600, 19200, 38400, 57600, 115200, 230400, 460800, 500000, 921600, 1000000\n",
@@ -370,7 +376,7 @@ int UARTNode::init()
 	if (cfsetispeed(&uart_config, speed) < 0 || cfsetospeed(&uart_config, speed) < 0) {
 		int errno_bkp = errno;
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUART transport: ERR SET BAUD %s: %d (%d)\033[0m\n", uart_name, termios_state,
+		printf("[ micrortps_transport ]\tUART transport: ERR SET BAUD %s: %d (%d)\n", uart_name, termios_state,
 		       errno);
 #else
 		PX4_ERR("ERR SET BAUD %s: %d (%d)", uart_name, termios_state, errno);
@@ -382,7 +388,7 @@ int UARTNode::init()
 	if ((termios_state = tcsetattr(uart_fd, TCSANOW, &uart_config)) < 0) {
 		int errno_bkp = errno;
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUART transport: ERR SET CONF %s (%d)\033[0m\n", uart_name, errno);
+		printf("[ micrortps_transport ]\tUART transport: ERR SET CONF %s (%d)\n", uart_name, errno);
 #else
 		PX4_ERR("UART transport: ERR SET CONF %s (%d)", uart_name, errno);
 #endif /* PX4_ERR */
@@ -432,6 +438,15 @@ int UARTNode::init()
 	poll_fd[0].fd = uart_fd;
 	poll_fd[0].events = POLLIN;
 
+#ifndef PX4_INFO
+  RCLCPP_INFO(
+    rclcpp::get_logger("micrortps_transport"),
+    "UART transport: Link established on device %s",
+    uart_name);
+#else
+  PX4_INFO("[ micrortps_transport ]\tUART transport: Link established on device %s", uart_name);
+#endif
+
 	return uart_fd;
 }
 
@@ -444,7 +459,9 @@ uint8_t UARTNode::close()
 {
 	if (-1 != uart_fd) {
 #ifndef PX4_WARN
-		printf("\033[1;33m[ micrortps_transport ]\tClosed UART.\n\033[0m");
+    RCLCPP_WARN(
+      rclcpp::get_logger("micrortps_transport"),
+      "Closed UART");
 #else
 		PX4_WARN("Closed UART.");
 #endif /* PX4_WARN */
@@ -623,7 +640,9 @@ int UDPNode::init_receiver(uint16_t udp_port)
 
 	if ((receiver_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUDP transport: Create socket failed\033[0m\n");
+    RCLCPP_ERROR(
+      rclcpp::get_logger("micrortps_transport"),
+      "UDP transport: Create socket failed");
 #else
 		PX4_ERR("UDP transport: Create socket failed");
 #endif /* PX4_ERR */
@@ -631,14 +650,18 @@ int UDPNode::init_receiver(uint16_t udp_port)
 	}
 
 #ifndef PX4_INFO
-	printf("[ micrortps_transport ]\tUDP transport: Trying to connect...\n");
+  RCLCPP_INFO(
+    rclcpp::get_logger("micrortps_transport"),
+    "UDP transport: Trying to bind socket...");
 #else
 	PX4_INFO("UDP transport: Trying to connect...");
 #endif /* PX4_INFO */
 
 	if (bind(receiver_fd, (struct sockaddr *)&receiver_inaddr, sizeof(receiver_inaddr)) < 0) {
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUDP transport: Bind failed\033[0m\n");
+    RCLCPP_ERROR(
+      rclcpp::get_logger("micrortps_transport"),
+      "UDP transport: Bind failed");
 #else
 		PX4_ERR("UDP transport: Bind failed");
 #endif /* PX4_ERR */
@@ -646,7 +669,9 @@ int UDPNode::init_receiver(uint16_t udp_port)
 	}
 
 #ifndef PX4_INFO
-	printf("[ micrortps_transport ]\tUDP transport: Connected to server!\n\n");
+  RCLCPP_INFO(
+    rclcpp::get_logger("micrortps_transport"),
+    "UDP transport: Socket bound!");
 #else
 	PX4_INFO("UDP transport: Connected to server!");
 #endif /* PX4_INFO */
@@ -660,7 +685,9 @@ int UDPNode::init_sender(uint16_t udp_port)
 
 	if ((sender_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUDP transport: Create socket failed\033[0m\n");
+    RCLCPP_ERROR(
+      rclcpp::get_logger("micrortps_transport"),
+      "UDP transport: Create socket failed");
 #else
 		PX4_ERR("UDP transport: Create socket failed");
 #endif /* PX4_ERR */
@@ -673,7 +700,9 @@ int UDPNode::init_sender(uint16_t udp_port)
 
 	if (inet_aton(udp_ip, &sender_outaddr.sin_addr) == 0) {
 #ifndef PX4_ERR
-		printf("\033[0;31m[ micrortps_transport ]\tUDP transport: inet_aton() failed\033[0m\n");
+    RCLCPP_ERROR(
+      rclcpp::get_logger("micrortps_transport"),
+      "UDP transport: inet_aton() failed");
 #else
 		PX4_ERR("UDP transport: inet_aton() failed");
 #endif /* PX4_ERR */
@@ -691,7 +720,9 @@ uint8_t UDPNode::close()
 
 	if (sender_fd != -1) {
 #ifndef PX4_WARN
-		printf("\033[1;33m[ micrortps_transport ]\tUDP transport: Closed sender socket!\033[0m\n");
+    RCLCPP_WARN(
+      rclcpp::get_logger("micrortps_transport"),
+      "UDP transport: Closed sender socket!");
 #else
 		PX4_WARN("UDP transport: Closed sender socket!");
 #endif /* PX4_WARN */
@@ -702,7 +733,9 @@ uint8_t UDPNode::close()
 
 	if (receiver_fd != -1) {
 #ifndef PX4_WARN
-		printf("\033[1;33m[ micrortps_transport ]\tUDP transport: Closed receiver socket!\033[0m\n");
+    RCLCPP_WARN(
+      rclcpp::get_logger("micrortps_transport"),
+      "UDP transport: Closed receiver socket!");
 #else
 		PX4_WARN("UDP transport: Closed receiver socket!");
 #endif /* PX4_WARN */

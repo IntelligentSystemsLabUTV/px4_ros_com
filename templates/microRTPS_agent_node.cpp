@@ -1,5 +1,5 @@
 /**
- * ROS 2 Node for the microRTPS agent, to add specific functionalities.
+ * ROS 2 Node for the microRTPS Agent, to add specific functionalities.
  *
  * Roberto Masocco <robmasocco@gmail.com>
  * Intelligent Systems Lab <isl.torvergata@gmail.com>

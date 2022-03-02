@@ -1,5 +1,5 @@
 /**
- * ROS 2 Node for the microRTPS agent, to add specific functionalities.
+ * ROS 2 Node for the microRTPS Agent, to add specific functionalities.
  *
  * Roberto Masocco <robmasocco@gmail.com>
  * Intelligent Systems Lab <isl.torvergata@gmail.com>
@@ -63,7 +63,7 @@ private:
   rclcpp::Publisher<px4_msgs::msg::VehicleLocalPositionStamped>::SharedPtr local_pos_pub_;
   rclcpp::Publisher<px4_msgs::msg::VehicleAttitudeStamped>::SharedPtr attitude_pub_;
   rclcpp::Publisher<px4_msgs::msg::PX4Timestamp>::SharedPtr timestamp_pub_;
-};
+}; // class AgentNode
 
 } // namespace MicroRTPSAgentNode
 

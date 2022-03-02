@@ -205,11 +205,11 @@ void @(topic)_Publisher::PubListener::onPublicationMatched(Publisher *pub, Match
 	if (is_different_endpoint) {
 		if (info.status == MATCHED_MATCHING) {
 			n_matched++;
-			std::cout << "\033[0;37m[   micrortps_agent   ]\t@(topic) publisher matched\033[0m" << std::endl;
+			std::cout << "[   micrortps_agent   ]\t@(topic) publisher matched" << std::endl;
 
 		} else {
 			n_matched--;
-			std::cout << "\033[0;37m[   micrortps_agent   ]\t@(topic) publisher unmatched\033[0m" << std::endl;
+			std::cout << "[   micrortps_agent   ]\t@(topic) publisher unmatched" << std::endl;
 		}
 	}
 }

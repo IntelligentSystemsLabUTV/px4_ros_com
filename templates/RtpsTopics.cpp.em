@@ -61,7 +61,7 @@ bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_se
 {
 @[if recv_topics]@
 	// Initialise subscribers
-	std::cout << "\033[0;36m---   Subscribers   ---\033[0m" << std::endl;
+	std::cout << "---   Subscribers   ---" << std::endl;
 @[for topic in recv_topics]@
 
 	if (_@(topic)_sub.init(@(rtps_message_id(ids, topic)), t_send_queue_cv, t_send_queue_mutex, t_send_queue, ns, localhost_only_)) {
@@ -73,11 +73,11 @@ bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_se
 	}
 
 @[end for]@
-	std::cout << "\033[0;36m-----------------------\033[0m" << std::endl << std::endl;
+	std::cout << "-----------------------" << std::endl << std::endl;
 @[end if]@
 @[if send_topics]@
 	// Initialise publishers
-	std::cout << "\033[0;36m----   Publishers  ----\033[0m" << std::endl;
+	std::cout << "----   Publishers  ----" << std::endl;
 @[for topic in send_topics]@
 
 	if (_@(topic)_pub.init(ns, localhost_only_, agent_node)) {
@@ -92,7 +92,7 @@ bool RtpsTopics::init(std::condition_variable *t_send_queue_cv, std::mutex *t_se
 	}
 
 @[end for]@
-	std::cout << "\033[0;36m-----------------------\033[0m" << std::endl;
+	std::cout << "-----------------------" << std::endl;
 @[end if]@
 	return true;
 }
@@ -111,12 +111,12 @@ void RtpsTopics::publish(const uint8_t topic_ID, char data_buffer[], size_t len)
 		  st.deserialize(cdr_des);
     } catch (const eprosima::fastcdr::exception::BadParamException & e) {
       printf(
-        "\033[1;33m[   micrortps_agent   ]\tTopic ID '%hhu'::BadParamException: %s, dropping message\033[0m\n",
+        "[   micrortps_agent   ]\tTopic ID '%hhu'::BadParamException: %s, dropping message\n",
         topic_ID, e.what());
       return;
     } catch (const eprosima::fastcdr::exception::NotEnoughMemoryException & e) {
       printf(
-        "\033[1;33m[   micrortps_agent   ]\tTopic ID '%hhu'::NotEnoughMemoryException: %s, dropping message\033[0m\n",
+        "[   micrortps_agent   ]\tTopic ID '%hhu'::NotEnoughMemoryException: %s, dropping message\n",
         topic_ID, e.what());
       return;
     }
@@ -142,7 +142,7 @@ void RtpsTopics::publish(const uint8_t topic_ID, char data_buffer[], size_t len)
 @[end for]@
 
 	default:
-		printf("\033[1;33m[   micrortps_agent   ]\tUnexpected topic ID '%hhu' to publish. Please make sure the agent is capable of parsing the message associated to the topic ID '%hhu'\033[0m\n",
+		printf("[   micrortps_agent   ]\tUnexpected topic ID '%hhu' to publish. Please make sure the agent is capable of parsing the message associated to the topic ID '%hhu'\n",
 		       topic_ID, topic_ID);
 		break;
 	}
@@ -184,7 +184,7 @@ bool RtpsTopics::getMsg(const uint8_t topic_ID, eprosima::fastcdr::Cdr &scdr)
 @[end for]@
 
 	default:
-		printf("\033[1;33m[   micrortps_agent   ]\tUnexpected topic ID '%hhu' to getMsg. Please make sure the agent is capable of parsing the message associated to the topic ID '%hhu'\033[0m\n",
+		printf("[   micrortps_agent   ]\tUnexpected topic ID '%hhu' to getMsg. Please make sure the agent is capable of parsing the message associated to the topic ID '%hhu'\n",
 		       topic_ID, topic_ID);
 		break;
 	}

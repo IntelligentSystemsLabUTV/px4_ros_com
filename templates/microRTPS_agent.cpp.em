@@ -90,6 +90,8 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 #define DEFAULT_SEND_PORT 2019
 #define DEFAULT_IP "127.0.0.1"
 
+#define UNUSED(arg) (void)(arg)
+
 using namespace eprosima;
 using namespace eprosima::fastrtps;
 using namespace MicroRTPSAgentNode;
@@ -125,21 +127,22 @@ struct options {
 /* Prints usage information. */
 static void usage(const char *name)
 {
-	printf("usage: %s [options]\n\n"
-	       "  -b <baudrate>           UART device baudrate (default: 460800 baud)\n"
-	       "  -d <device>             UART device (default: /dev/ttyACM0)\n"
-	       "  -f <sw flow control>    Activates UART link SW flow control\n"
-	       "  -h <hw flow control>    Activates UART link HW flow control\n"
-	       "  -i <ip_address>         Target IP for UDP (default: 127.0.0.1)\n"
-         "  -l                      Use only the local loopback interface for DDS communications\n"
-	       "  -n <namespace>          ROS 2 topics namespace\n"
-	       "  -p <poll_ms>            Time in ms to poll over UART (default: 1 ms)\n"
-	       "  -r <reception port>     UDP inbound port (default: 2020)\n"
-	       "  -s <sending port>       UDP outbound port (default: 2019)\n"
-	       "  -t <transport>          UDP or UART transport (default: UART)\n"
-	       "  -v <debug verbosity>    Add more verbosity to logs\n"
-	       "  -w <sleep_time_us>      Time in us for which to sleep in each iteration (default: 1 ms)\n",
-	       name);
+	fprintf(stderr,
+          "usage: %s [options]\n\n"
+	        "  -b <baudrate>           UART device baudrate (default: 460800 baud)\n"
+	        "  -d <device>             UART device (default: /dev/ttyACM0)\n"
+	        "  -f <sw flow control>    Activates UART link SW flow control\n"
+	        "  -h <hw flow control>    Activates UART link HW flow control\n"
+	        "  -i <ip_address>         Target IP for UDP (default: 127.0.0.1)\n"
+          "  -l                      Use only the local loopback interface for DDS communications\n"
+	        "  -n <namespace>          ROS 2 topics namespace\n"
+	        "  -p <poll_ms>            Time in ms to poll over UART (default: 1 ms)\n"
+	        "  -r <reception port>     UDP inbound port (default: 2020)\n"
+	        "  -s <sending port>       UDP outbound port (default: 2019)\n"
+	        "  -t <transport>          UDP or UART transport (default: UART)\n"
+	        "  -v <debug verbosity>    Add more verbosity to logs\n"
+	        "  -w <sleep_time_us>      Time in us for which to sleep in each iteration (default: 1 ms)\n",
+	        name);
 }
 
 /* Parses startup options. */
@@ -185,11 +188,11 @@ static int parse_options(int argc, char **argv)
 
 	if (_options.poll_ms < 1) {
 		_options.poll_ms = 1;
-		printf("\033[1;33m[   micrortps_agent   ]\tPoll timeout too low, reset to 1 ms\033[0m");
+    RCLCPP_WARN(rclcpp::get_logger(MODULE_NAME), "Poll timeout too low, reset to 1 ms");
 	}
 
 	if (_options.hw_flow_control && _options.sw_flow_control) {
-		printf("\033[1;31m[   micrortps_agent   ]\tBoth HW and SW flow control set\033[0m");
+    RCLCPP_ERROR(rclcpp::get_logger(MODULE_NAME), "Both HW and SW flow control set");
 		return -1;
 	}
 
@@ -244,10 +247,10 @@ void sender()
 /* Signal handler routine, terminates the Agent */
 void sig_handler(int sig, std::string & logger_name)
 {
+  UNUSED(sig);
   RCLCPP_WARN(
     rclcpp::get_logger(logger_name),
-    "Got signal (%d), terminating %s",
-    sig,
+    "Terminating %s",
     MODULE_NAME);
 	running = 0;
 	transport_node->close();
@@ -257,7 +260,7 @@ int main(int argc, char ** argv)
 {
   // Parse startup options
 	if (parse_options(argc, argv)) {
-    printf("\033[1;31m[   micrortps_agent   ]\tFailed to parse options\033[0m\n");
+    RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to parse options");
 		exit(EXIT_FAILURE);
 	}
 
@@ -289,18 +292,17 @@ int main(int argc, char ** argv)
   signal_handler.ignore(SIGHUP);
 
   // Initialize transport handlers
-	printf("\033[0;37m--- MicroRTPS Agent ---\033[0m\n");
-	printf("\033[1;33m[   micrortps_agent   ]\tStarting link...\033[0m\n");
+  RCLCPP_WARN(rclcpp::get_logger(MODULE_NAME), "Starting link...");
 
 	const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
 
 	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || _options.localhost_only) {
-		printf("[   micrortps_agent   ]\tUsing only the local loopback network interface\n");
+    RCLCPP_INFO(rclcpp::get_logger(MODULE_NAME), "Using only the local loopback network interface");
 	}
   if (_options.localhost_only && (!localhost_only_var || strcmp(localhost_only_var, "1"))) {
     // Set the environment variable in case it wasn't but the option was specified
     if (setenv("ROS_LOCALHOST_ONLY", "1", 1)) {
-      printf("\033[1;31m[   micrortps_agent   ]\tFailed to configure environment\033[0m\n");
+      RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to configure environment");
 		  exit(EXIT_FAILURE);
     }
   }
@@ -309,26 +311,36 @@ int main(int argc, char ** argv)
 	case options::eTransports::UART: {
 			transport_node = std::make_unique<UARTNode>(_options.device, _options.baudrate, _options.poll_ms,
 						       _options.sw_flow_control, _options.hw_flow_control, _options.verbose_debug);
-			printf("[   micrortps_agent   ]\tUART transport: device: %s; baudrate: %d; sleep time: %d us; poll interval: %d ms; flow_control: %s\n",
-			       _options.device, _options.baudrate, _options.sleep_us, _options.poll_ms,
-			       _options.sw_flow_control ? "SW enabled" : (_options.hw_flow_control ? "HW enabled" : "No"));
+			RCLCPP_INFO(
+        rclcpp::get_logger(MODULE_NAME),
+        "UART transport: device: %s; baudrate: %d; sleep time: %d us; poll interval: %d ms; flow_control: %s",
+			  _options.device,
+        _options.baudrate,
+        _options.sleep_us,
+        _options.poll_ms,
+			  _options.sw_flow_control ? "SW enabled" : (_options.hw_flow_control ? "HW enabled" : "No"));
 		}
 		break;
 
 	case options::eTransports::UDP: {
 			transport_node = std::make_unique<UDPNode>(_options.ip, _options.recv_port, _options.send_port, _options.verbose_debug);
-			printf("[   micrortps_agent   ]\tUDP transport: IP address: %s; inbound port: %u; outbound port: %u; sleep time: %d us\n",
-			       _options.ip, _options.recv_port, _options.send_port, _options.sleep_us);
+			RCLCPP_INFO(
+        rclcpp::get_logger(MODULE_NAME),
+        "UDP transport: IP address: %s; inbound port: %u; outbound port: %u; sleep time: %d us",
+			  _options.ip,
+        _options.recv_port,
+        _options.send_port,
+        _options.sleep_us);
 		}
 		break;
 
 	default:
-		printf("\033[1;31m[   micrortps_agent   ]\tInvalid transport\033[0m\n");
+		RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Invalid transport");
 		exit(EXIT_FAILURE);
 	}
 
 	if (0 > transport_node->init()) {
-		printf("\033[1;31m[   micrortps_agent   ]\tFailed to initialize transport node\033[0m\n");
+    RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to initialize transport node");
 		exit(EXIT_FAILURE);
 	}
 
@@ -387,14 +399,23 @@ int main(int argc, char ** argv)
 @[if send_topics]@
 	if (received > 0) {
 	  std::chrono::duration<double> elapsed_secs = end - start;
-		printf("\033[1;33m[   micrortps_agent   ]\tRECEIVED: %lu messages - %lu bytes; %lu loops - %.03f seconds - %.02f KB/s\033[0m\n",
-		       received, total_read, loop, elapsed_secs.count(), static_cast<double>(total_read) / (1000 * elapsed_secs.count()));
+		RCLCPP_WARN(
+      rclcpp::get_logger(MODULE_NAME),
+      "RECEIVED: %lu messages - %lu bytes; %lu loops - %.03f seconds - %.02f KB/s",
+		  received,
+      total_read,
+      loop,
+      elapsed_secs.count(),
+      static_cast<double>(total_read) / (1000 * elapsed_secs.count()));
 	}
 @[end if]@
 @[if recv_topics]@
 	if (sent > 0) {
-		printf("\033[1;33m[   micrortps_agent   ]\tSENT: %lu messages - %lu bytes\033[0m\n",
-           sent, total_sent);
+		RCLCPP_WARN(
+      rclcpp::get_logger(MODULE_NAME),
+      "SENT: %lu messages - %lu bytes",
+      sent,
+      total_sent);
 	}
 @[end if]@
 
