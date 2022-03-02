@@ -2,13 +2,13 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>px4_ros_com</name>
-  <version>0.1.0</version>
-  <description>Package to interface ROS 2 with PX4</description>
+  <version>1.0.0</version>
+  <description>Package to interface ROS 2 with PX4 over DDS</description>
 
-  <maintainer email="nuno.marques@dronesolutions.io">Nuno Marques</maintainer>
-  <author email="nuno.marques@dronesolutions.io">Nuno Marques</author>
+  <maintainer email="isl.torvergata@gmail.com">Intelligent Systems Lab</maintainer>
+  <author email="isl.torvergata@gmail.com">Intelligent Systems Lab</author>
 
-  <license>BSD 3-Clause</license>
+  <license>GNU GPL v3.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
