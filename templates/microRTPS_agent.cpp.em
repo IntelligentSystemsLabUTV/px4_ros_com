@@ -52,6 +52,8 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
  *
  ****************************************************************************/
 
+#define MODULE_NAME "micrortps_agent"
+
 #include <thread>
 #include <atomic>
 #include <cstdlib>
@@ -71,6 +73,8 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <ros2_signal_handler/signal_handler/signal_handler.hpp>
+
 #include "microRTPS_transport.h"
 #include "microRTPS_timesync.h"
 #include "RtpsTopics.h"
@@ -89,6 +93,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 using namespace eprosima;
 using namespace eprosima::fastrtps;
 using namespace MicroRTPSAgentNode;
+using namespace ROS2SignalHandler;
 
 /* Global application state */
 volatile sig_atomic_t running = 1;
@@ -173,7 +178,7 @@ static int parse_options(int argc, char **argv)
 		case 'n': if (nullptr != optarg) _options.ns = std::string(optarg) + "/"; break;
 
 		default:
-			usage("micrortps_agent");
+			usage(MODULE_NAME);
 			return -1;
 		}
 	}
@@ -236,10 +241,14 @@ void sender()
 }
 @[end if]@
 
-/* TODO Redo */
-void signal_handler(int signum)
+/* Signal handler routine, terminates the Agent */
+void sig_handler(int sig, std::string & logger_name)
 {
-	printf("\n\033[1;33m[   micrortps_agent   ]\tGot signal (%d)\033[0m\n", signum);
+  RCLCPP_WARN(
+    rclcpp::get_logger(logger_name),
+    "Got signal (%d), terminating %s",
+    sig,
+    MODULE_NAME);
 	running = 0;
 	transport_node->close();
 }
@@ -252,14 +261,32 @@ int main(int argc, char ** argv)
 		exit(EXIT_FAILURE);
 	}
 
-  // Initialize ROS 2 node
-  // TODO Add custom context
-  rclcpp::init(argc, argv);
-  auto agent_node = std::make_shared<AgentNode>("micrortps_agent_node", _options.ns);
+  // Create and initialize ROS 2 context
+  auto context = std::make_shared<rclcpp::Context>();
+  rclcpp::InitOptions init_options = rclcpp::InitOptions();
+  init_options.shutdown_on_sigint = true;
+  context->init(argc, argv, init_options);
 
-  // TODO Use other module
-	// register signal SIGINT and signal handler
-	signal(SIGINT, signal_handler);
+  // Initialize ROS 2 node
+  rclcpp::NodeOptions node_opts = rclcpp::NodeOptions();
+  node_opts.context(context);
+  auto agent_node = std::make_shared<AgentNode>(
+    MODULE_NAME "_node",
+    _options.ns,
+    node_opts);
+
+  // Initialize and configure signal handler
+  SignalHandler & signal_handler = SignalHandler::get_global_signal_handler();
+  signal_handler.init(
+    context,
+    MODULE_NAME "_signal_handler",
+    std::bind(
+      sig_handler,
+      std::placeholders::_1,
+      std::placeholders::_2));
+  signal_handler.install(SIGINT);
+  signal_handler.install(SIGTERM);
+  signal_handler.ignore(SIGHUP);
 
   // Initialize transport handlers
 	printf("\033[0;37m--- MicroRTPS Agent ---\033[0m\n");
@@ -375,9 +402,11 @@ int main(int argc, char ** argv)
 	transport_node.reset();
   topics.reset();
 
-  // Destroy ROS 2 context and node
+  // Destroy ROS 2 and node
   agent_node.reset();
-  rclcpp::shutdown();
+
+  // Finalize signal handler
+  signal_handler.fini();
 
 	exit(EXIT_SUCCESS);
 }

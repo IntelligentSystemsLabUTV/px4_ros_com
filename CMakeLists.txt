@@ -49,6 +49,7 @@ find_package(px4_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(ros2_signal_handler REQUIRED)
 
 find_package(PythonInterp 3 REQUIRED)
 if(ROS_DISTRO IN_LIST ROS_DISTROS)
@@ -101,6 +102,7 @@ ament_target_dependencies(
   "rclcpp"
   "px4_msgs"
   "std_msgs"
+  "ros2_signal_handler"
 )
 
 # Add examples

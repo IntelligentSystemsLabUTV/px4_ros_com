@@ -40,8 +40,8 @@ namespace MicroRTPSAgentNode
  * @param node_name New node name.
  * @param node_namespace New node namespace.
  */
-AgentNode::AgentNode(std::string node_name, std::string node_namespace)
-: Node(node_name)
+AgentNode::AgentNode(std::string node_name, std::string node_namespace, rclcpp::NodeOptions & opts)
+: Node(node_name, opts)
 {
   // Samples must be published in a timely manner, so use sensor_data QoS
   rmw_qos_profile_t samples_qos = rmw_qos_profile_sensor_data;

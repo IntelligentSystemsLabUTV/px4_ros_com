@@ -47,7 +47,7 @@ namespace MicroRTPSAgentNode
 class AgentNode : public rclcpp::Node
 {
 public:
-  AgentNode(std::string node_name, std::string node_namespace);
+  AgentNode(std::string node_name, std::string node_namespace, rclcpp::NodeOptions & opts);
   void publish_local_position_sample(
     uint64_t timestamp, uint64_t timestamp_sample,
     bool xy_valid, bool z_valid, bool v_xy_valid, bool v_z_valid,
