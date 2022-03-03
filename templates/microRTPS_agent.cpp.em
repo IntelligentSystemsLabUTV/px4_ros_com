@@ -264,6 +264,19 @@ int main(int argc, char ** argv)
 		exit(EXIT_FAILURE);
 	}
 
+	// Check network settings
+  const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
+	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || _options.localhost_only) {
+    RCLCPP_INFO(rclcpp::get_logger(MODULE_NAME), "Using only the local loopback network interface");
+	}
+  if (_options.localhost_only && (!localhost_only_var || strcmp(localhost_only_var, "1"))) {
+    // Set the environment variable in case it wasn't but the option was specified
+    if (setenv("ROS_LOCALHOST_ONLY", "1", 1)) {
+      RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to configure environment");
+		  exit(EXIT_FAILURE);
+    }
+  }
+
   // Create and initialize ROS 2 context
   auto context = std::make_shared<rclcpp::Context>();
   rclcpp::InitOptions init_options = rclcpp::InitOptions();
@@ -292,19 +305,6 @@ int main(int argc, char ** argv)
 
   // Initialize transport handlers
   RCLCPP_WARN(rclcpp::get_logger(MODULE_NAME), "Starting link...");
-
-	const char* localhost_only_var = std::getenv("ROS_LOCALHOST_ONLY");
-
-	if ((localhost_only_var && strcmp(localhost_only_var, "1") == 0) || _options.localhost_only) {
-    RCLCPP_INFO(rclcpp::get_logger(MODULE_NAME), "Using only the local loopback network interface");
-	}
-  if (_options.localhost_only && (!localhost_only_var || strcmp(localhost_only_var, "1"))) {
-    // Set the environment variable in case it wasn't but the option was specified
-    if (setenv("ROS_LOCALHOST_ONLY", "1", 1)) {
-      RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to configure environment");
-		  exit(EXIT_FAILURE);
-    }
-  }
 
 	switch (_options.transport) {
 	case options::eTransports::UART: {
@@ -368,6 +368,11 @@ int main(int argc, char ** argv)
   // Start sender thread
 	std::thread sender_thread(sender);
 @[end if]@
+
+  RCLCPP_WARN(
+    rclcpp::get_logger(MODULE_NAME),
+    "(%d) " MODULE_NAME " online",
+    getpid());
 
   // Message processing routine
 	while (running) {
