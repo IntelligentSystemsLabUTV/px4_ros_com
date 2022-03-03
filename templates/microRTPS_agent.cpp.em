@@ -275,7 +275,6 @@ int main(int argc, char ** argv)
   node_opts.context(context);
   auto agent_node = std::make_shared<AgentNode>(
     MODULE_NAME "_node",
-    _options.ns,
     node_opts);
 
   // Initialize and configure signal handler

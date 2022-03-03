@@ -38,9 +38,8 @@ namespace MicroRTPSAgentNode
  * @brief Creates a new AgentNode.
  *
  * @param node_name New node name.
- * @param node_namespace New node namespace.
  */
-AgentNode::AgentNode(std::string node_name, std::string node_namespace, rclcpp::NodeOptions & opts)
+AgentNode::AgentNode(std::string node_name, rclcpp::NodeOptions & opts)
 : Node(node_name, opts)
 {
   // Samples must be published in a timely manner, so use sensor_data QoS
@@ -49,17 +48,14 @@ AgentNode::AgentNode(std::string node_name, std::string node_namespace, rclcpp::
 
   // Initialize publishers
   local_pos_pub_ = this->create_publisher<VehicleLocalPositionStamped>(
-    node_namespace + node_name + "/vehicle_local_position_stamped",
-    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(samples_qos))
-  );
+    "~/vehicle_local_position_stamped/out",
+    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(samples_qos)));
   attitude_pub_ = this->create_publisher<VehicleAttitudeStamped>(
-    node_namespace + node_name + "/vehicle_attitude_stamped",
-    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(samples_qos))
-  );
+    "~/vehicle_attitude_stamped/out",
+    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(samples_qos)));
   timestamp_pub_ = this->create_publisher<PX4Timestamp>(
-    node_namespace + node_name + "/px4_timestamp",
-    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(samples_qos))
-  );
+    "~/px4_timestamp/out",
+    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(samples_qos)));
 
   RCLCPP_INFO(this->get_logger(), "Node initialized");
 }

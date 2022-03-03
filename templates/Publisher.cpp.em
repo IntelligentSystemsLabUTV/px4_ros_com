@@ -13,6 +13,7 @@
 @{
 from packaging import version
 import genmsg.msgs
+import re
 
 from px_generate_uorb_topic_helper import * # this is in Tools/
 
@@ -21,6 +22,17 @@ try:
     ros2_distro = ros2_distro.decode("utf-8")
 except AttributeError:
     pass
+
+topic_name = topic
+
+# For ROS 2, use the topic pattern convention defined in
+# http://wiki.ros.org/ROS/Patterns/Conventions
+if ros2_distro:
+    topic_name_split = re.sub( r"([A-Z])", r" \1", topic).split()
+    topic_name = topic_name_split[0]
+    for w in topic_name_split[1:]:
+        topic_name += "_" + w
+    topic_name = topic_name.lower()
 }@
 /****************************************************************************
  *
@@ -169,7 +181,7 @@ bool @(topic)_Publisher::init(const std::string &ns, bool localhost_only, std::s
 @[    else]@
 	std::string topicName = "rt/";
 	topicName.append(ns);
-	topicName.append("@(topic)_PubSubTopic");
+	topicName.append("@(topic_name)/out");
 	Wparam.topic.topicName = topicName;
 @[    end if]@
 	// ROS2 default publish mode QoS policy
