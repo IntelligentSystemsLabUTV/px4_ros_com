@@ -18,9 +18,10 @@ def generate_launch_description():
       '-t',
       'UART', # UART transport,
       '-d',
-      '/dev/ttyACM0', # UART device
+      '/dev/ttyS5', # UART device
       '-b',
       '921600', # UART device baudrate
+      '-h', # Hardware flow control
       '--' # ROS 2 options will come after this, so getopt must stop here
     ]
   )
