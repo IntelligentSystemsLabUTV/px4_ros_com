@@ -57,6 +57,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 #include <thread>
 #include <atomic>
 #include <cstdlib>
+#include <cstdio>
 #include <unistd.h>
 #include <poll.h>
 #include <chrono>
@@ -168,15 +169,15 @@ static int parse_options(int argc, char **argv)
 
 		case 's': _options.send_port       = strtoul(optarg, nullptr, 10);  break;
 
-		case 'i': if (nullptr != optarg) strcpy(_options.ip, optarg);       break;
-
 		case 'f': _options.sw_flow_control = true;                          break;
 
 		case 'h': _options.hw_flow_control = true;                          break;
 
-		case 'v': _options.verbose_debug = true;                            break;
+		case 'v': _options.verbose_debug   = true;                          break;
 
-    case 'l': _options.localhost_only = true;                           break;
+    case 'l': _options.localhost_only  = true;                          break;
+
+    case 'i': if (nullptr != optarg) strcpy(_options.ip, optarg);       break;
 
 		case 'n': if (nullptr != optarg) _options.ns = std::string(optarg) + "/"; break;
 
@@ -258,6 +259,12 @@ void sig_handler(int sig, std::string & logger_name)
 
 int main(int argc, char ** argv)
 {
+  // Disable I/O buffering
+  if (setvbuf(stdout, NULL, _IONBF, 0)) {
+    RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to set I/O buffering");
+    exit(EXIT_FAILURE);
+  }
+
   // Parse startup options
 	if (parse_options(argc, argv)) {
     RCLCPP_FATAL(rclcpp::get_logger(MODULE_NAME), "Failed to parse options");
