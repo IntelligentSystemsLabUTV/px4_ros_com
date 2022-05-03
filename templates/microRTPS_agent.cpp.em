@@ -74,7 +74,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <ros2_signal_handler/signal_handler/signal_handler.hpp>
+#include <ros2_signal_handler/signal_handler.hpp>
 
 #include "microRTPS_transport.h"
 #include "microRTPS_timesync.h"
