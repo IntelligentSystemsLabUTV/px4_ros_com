@@ -18,12 +18,9 @@ def generate_launch_description():
             '-n',
             'fmu',  # Everything will be under the "/fmu" namespace
             '-t',
-            'UART',  # UART transport,
-            '-d',
-            '/dev/ttyS5',  # UART device
-            '-b',
-            '921600',  # UART device baudrate
-            '-h',  # Hardware flow control
+            'UDP',  # UDP transport
+            '-i',  # Specify IP address
+            '10.0.0.2',  # IP address of the device running PX4
             '--'  # ROS 2 options will come after this, so getopt must stop here
         ]
     )
